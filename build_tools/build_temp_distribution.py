@@ -78,6 +78,7 @@ def build_distribution() -> None:
     copy_tree(RELEASE_TEMPLATE / "Result", OUTPUT / "Result")
     copy_tree(RELEASE_TEMPLATE / "Temp", OUTPUT / "Temp")
     copy_file(RELEASE_TEMPLATE / "MeshConverter.dll", OUTPUT / "MeshConverter.dll")
+    copy_file(RELEASE_TEMPLATE / "CALUMI.Animation.dll", OUTPUT / "CALUMI.Animation.dll")
 
     # Additional tool directories requested for inclusion in the test distribution
     log("Copying additional tool sources")
@@ -123,6 +124,7 @@ def validate_distribution(compile_check: bool) -> None:
         OUTPUT / "assets",
         OUTPUT / "3rdparty",
         OUTPUT / "MeshConverter.dll",
+        OUTPUT / "CALUMI.Animation.dll",
         OUTPUT / "profiler",
         OUTPUT / "physics_data.bin",
         OUTPUT / "physics_data_debug.bin",

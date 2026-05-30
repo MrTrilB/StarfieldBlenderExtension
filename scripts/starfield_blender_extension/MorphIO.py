@@ -30,6 +30,10 @@ def ImportMorphFromNumpy(filepath, operator, debug_delta_normal = False, force_i
 	
 	data = MeshConverter.ImportMorphAsNumpy(import_path, base_vert_bytecolor=base_vertex_bytecolor)
 
+	if data is None:
+		operator.report({'ERROR'}, "Failed to load morph data from file")
+		return {"CANCELLED"}
+
 	vert_count = data["numVertices"]
 	shape_keys = list(data["shapeKeys"])
 	delta_pos = data["deltaPositions"]
@@ -93,6 +97,7 @@ def ImportMorphFromNumpy(filepath, operator, debug_delta_normal = False, force_i
 		sk.relative_key = sk_basis
 		sk.slider_min = 0
 		sk.slider_max = 1
+		sk.value = 0.0
 
 		sk.data.foreach_set('co', (basis_positions + delta_pos[n]).ravel())
 
@@ -105,10 +110,10 @@ def ImportMorphFromNumpy(filepath, operator, debug_delta_normal = False, force_i
 		if use_normals:
 			utils_morph_attrs.MorphNormals().set_data(target_obj.data, key_name, delta_normals[n][loop_indices].ravel(), create_if_not_exist=True)
 
+	target_obj.active_shape_key_index = 0
+
 	operator.report({'INFO'}, f"Import Morph Successful.")
 	return {'FINISHED'}
-
-def ExportMorphFromSet(options, context, export_file_path, morph_node, operator):
 	_morph_objs = [obj for obj in morph_node.children if IsMorphObject(obj)]
 	morph_objs = []
 	morph_names = []
@@ -222,7 +227,7 @@ def ExportMorph_alt(options, context, export_file_path, operator, snapping_range
 
 	p_options = utils_primitive.Primitive.Options()
 	p_options.gather_morph_data = True
-	p_options.use_global_positions = options.use_world_origin
+	p_options.use_global_positions = False
 	
 	with utils_blender.get_obj_proxy(target_obj, triangulation_method='Ops') as new_obj:
 		rtn, reason = utils_primitive.CheckForPrimitive(new_obj, gather_tangents=False, gather_morphs=True)
@@ -252,7 +257,7 @@ def ExportMorph_alt(options, context, export_file_path, operator, snapping_range
 				sel_p_options = utils_primitive.Primitive.Options()
 				sel_p_options.gather_morph_data = True
 				sel_p_options.gather_tangents = False
-				sel_p_options.use_global_positions = options.use_world_origin
+				sel_p_options.use_global_positions = False
 
 				sel_primitive = utils_primitive.Primitive(select_obj, sel_p_options)
 				sel_primitive.gather()

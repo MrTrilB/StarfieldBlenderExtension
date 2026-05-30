@@ -43,7 +43,8 @@ class BGS_STARFIELD_PT_vertex_groups(bpy.types.Panel):
     blender_vertex_group_draw = None
 
     def draw(self, context):
-        BGS_STARFIELD_PT_vertex_groups.blender_vertex_group_draw(self, context)
+        if BGS_STARFIELD_PT_vertex_groups.blender_vertex_group_draw is not None:
+            BGS_STARFIELD_PT_vertex_groups.blender_vertex_group_draw(self, context)
 
         layout = self.layout
         ob = context.active_object
@@ -94,6 +95,8 @@ def unregister_custom():
 
 def register():
     bpy.utils.register_class(BGS_STARFIELD_PT_vertex_groups)
+    register_custom()
 
 def unregister():
     bpy.utils.unregister_class(BGS_STARFIELD_PT_vertex_groups)
+    unregister_custom()

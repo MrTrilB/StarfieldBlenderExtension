@@ -99,7 +99,8 @@ def bounded_vector_substraction(n0: np.ndarray, nt: np.ndarray) -> np.ndarray:
 		nt: np.array([x,y,z]) * n_row
 		return: dn = k * nt - n0 * n_row, s.t. max(abs(dn)) <= 1
 	'''
-	k_limit = n0/nt + np.abs(1/nt)
+	with np.errstate(divide='ignore', invalid='ignore'):
+		k_limit = n0/nt + np.abs(1/nt)
 	k_limit = np.nan_to_num(k_limit, nan = 1)
 	k_limit = np.hstack((k_limit, np.ones((k_limit.shape[0], 1))))
 

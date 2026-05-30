@@ -1169,13 +1169,14 @@ def TransferWeightByDistance(target_obj: bpy.types.Object, reference_obj: bpy.ty
 	SetActiveObject(original_active)
 
 def get_preferences():
-	addon = bpy.context.preferences.addons.get("starfield_blender_extension")
-	if addon is not None:
-		prefs = addon.preferences
-		if prefs is not None and (
-			hasattr(prefs, "texconv_path") or hasattr(prefs, "starfield_data_path")
-		):
-			return prefs
+	for addon_name in ("starfield_blender_extension", "starfieldblenderextension"):
+		addon = bpy.context.preferences.addons.get(addon_name)
+		if addon is not None:
+			prefs = addon.preferences
+			if prefs is not None and (
+				hasattr(prefs, "texconv_path") or hasattr(prefs, "starfield_data_path")
+			):
+				return prefs
 
 	# Fallback to any loaded addon preferences object that matches the expected Starfield prefs API.
 	for addon in bpy.context.preferences.addons.values():

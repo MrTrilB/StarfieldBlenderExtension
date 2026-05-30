@@ -376,9 +376,12 @@ FodyWeavers.xsd
 /UnkBlocks
 SFGBDocs/ReleaseTemplate/
 release_packages/
+SFGBDocs/Images/
 SFGBDocs/StarfieldArtTools/
 SFGBDocs/BGS_Starfield_ArtTools_1.0.0.5/
 SFGBDocs/io_starfield_havokphysics/
 SFGBDocs/FaceFiles/
+SFGBDocs/CALUMI.Animation-master/
+SFGBDocs/sf_animation_io-master/
 temp_check_dist/
 temp_check_dist/starfield_blender_extension/

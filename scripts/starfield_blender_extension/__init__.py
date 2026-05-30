@@ -17,6 +17,8 @@ from .utils import bgs, bs_plugin_data
 
 # Havok physics tool
 from . import tool_havokphysics
+# Animation workflow tool
+from . import tool_Animation
 
 bl_info = {
 	"name": "Starfield Blender Extension",
@@ -167,6 +169,7 @@ __modules__ = [
 	animation_types,
 	ui_types,
 	tool_havokphysics,
+	tool_Animation,
 ]
 
 # Register the operators and menu entries
@@ -185,12 +188,18 @@ def register():
 
 def unregister():
 
-	for attr in __scene_global_attrs__:
-		delattr(bpy.types.Scene, attr)
-
+	# First allow modules to unregister their classes and cleanup
 	for module in __modules__:
 		if hasattr(module, 'unregister'):
-			module.unregister()
+			try:
+				module.unregister()
+			except Exception:
+				pass
+
+	# Then remove scene-level properties if they exist
+	for attr in __scene_global_attrs__:
+		if hasattr(bpy.types.Scene, attr):
+			delattr(bpy.types.Scene, attr)
 	
 	# StarfieldArtTools preferences are unified in Preferences.SGBPreferences.
 

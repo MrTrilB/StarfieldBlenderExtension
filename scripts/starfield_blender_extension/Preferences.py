@@ -27,11 +27,15 @@ class ChooseFileForPreferencesOperator(bpy.types.Operator):
 
         # Copy the file to the plugin directory
         plugin_dir = utils_blender.ThirdPartyFolderPath()
+        os.makedirs(plugin_dir, exist_ok=True)
         texconv_path = os.path.join(plugin_dir, "texconv.exe")
         shutil.copy(self.filepath, texconv_path)
 
         preferences = utils_blender.get_preferences()
-        preferences.texconv_path = texconv_path
+        if preferences is not None:
+            preferences.texconv_path = texconv_path
+        else:
+            self.report({'WARNING'}, "Preferences object not found; texconv copied but path not saved.")
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -64,7 +68,9 @@ class InstallModulesOperator(bpy.types.Operator):
         layout.label(text="Install Modules")
 
 class SGBPreferences(bpy.types.AddonPreferences):
-    bl_idname = "starfield_blender_extension"
+    # Use the real loaded addon module name so Preferences always bind,
+    # regardless of folder naming (e.g. starfield_blender_extension vs starfieldblenderextension).
+    bl_idname = __package__
 
     starfield_data_path: bpy.props.StringProperty(
         name="Starfield Data Path",
@@ -105,16 +111,22 @@ class SGBPreferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
 
+        scene = getattr(context, "scene", None)
+
         sublayout = layout.column(heading="Default Export Path")
-        sublayout.enabled = True
-        sublayout.prop(context.scene, "export_mesh_folder_path", text="")
+        if scene is not None and hasattr(scene, "export_mesh_folder_path"):
+            sublayout.enabled = True
+            sublayout.prop(scene, "export_mesh_folder_path", text="")
+        else:
+            sublayout.enabled = False
+            sublayout.label(text="Unavailable until addon scene properties are registered")
 
         sublayout = layout.column(heading="Starfield Data Path")
         sublayout.enabled = True
         sublayout.prop(self, "starfield_data_path", text="")
 
         sublayout = layout.column(heading="Texconv Path")
-        sublayout.enabled = False
+        sublayout.enabled = True
         sublayout.prop(self, "texconv_path", text="")
         layout.operator("object.choose_file_for_preferences")
 
@@ -130,8 +142,12 @@ class SGBPreferences(bpy.types.AddonPreferences):
         row.enabled = not all([self.scipy_installed])
 
         sublayout = layout.column(heading="Debug Mode")
-        sublayout.enabled = True
-        sublayout.prop(context.scene, "sgb_debug_mode", toggle=True)
+        if scene is not None and hasattr(scene, "sgb_debug_mode"):
+            sublayout.enabled = True
+            sublayout.prop(scene, "sgb_debug_mode", toggle=True)
+        else:
+            sublayout.enabled = False
+            sublayout.label(text="Unavailable until addon scene properties are registered")
 
 
 

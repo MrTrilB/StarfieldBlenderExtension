@@ -70,7 +70,11 @@ class ImportCustomMorph(bpy.types.Operator):
 		layout.prop(self, "debug_delta_tangent")
 	
 	def execute(self, context):
-		return MorphIO.ImportMorphFromNumpy(self.filepath, self, self.debug_delta_normal, use_colors=self.use_colors, use_normals=self.use_normals, base_vertex_bytecolor=self.base_vertex_bytecolor)
+		try:
+			return MorphIO.ImportMorphFromNumpy(self.filepath, self, self.debug_delta_normal, use_colors=self.use_colors, use_normals=self.use_normals, base_vertex_bytecolor=self.base_vertex_bytecolor)
+		except Exception as e:
+			self.report({'ERROR'}, f"Morph import failed: {e}")
+			return {'CANCELLED'}
 
 	def invoke(self, context, event):
 		self.assets_folder = context.scene.assets_folder

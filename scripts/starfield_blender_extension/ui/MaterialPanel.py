@@ -255,16 +255,28 @@ def register():
     bpy.utils.register_class(ExportMaterialPanel)
 
 def unregister():
-    bpy.utils.unregister_class(ApplyMaterialOnObjectOperator)
-    bpy.utils.unregister_class(NewMaterialOperator)
-    bpy.utils.unregister_class(ExportMaterialOperator)
-    bpy.utils.unregister_class(ExportMaterialPanel)
-    del bpy.types.Scene.sf_export_material_name
-    del bpy.types.Scene.sf_export_material_ShaderModel
+    for cls in (ApplyMaterialOnObjectOperator, NewMaterialOperator, ExportMaterialOperator, ExportMaterialPanel):
+        try:
+            bpy.utils.unregister_class(cls)
+        except Exception:
+            pass
+
+    if hasattr(bpy.types.Scene, 'sf_export_material_name'):
+        delattr(bpy.types.Scene, 'sf_export_material_name')
+    if hasattr(bpy.types.Scene, 'sf_export_material_ShaderModel'):
+        delattr(bpy.types.Scene, 'sf_export_material_ShaderModel')
     for texture_item in MaterialConverter.TextureIndex.__members__.values():
-        delattr(bpy.types.Scene, f"sf_export_material_{texture_item.name}")
-        delattr(bpy.types.Scene, f"sf_export_material_{texture_item.name}_size")
-    del bpy.types.Scene.sf_export_material_normal_map_flip_y
-    del bpy.types.Scene.sf_export_material_alpha_thresh
-    del bpy.types.Scene.sf_export_material_alpha_blend_channel
-    del bpy.types.Scene.sf_export_material_folder
+        name_attr = f"sf_export_material_{texture_item.name}"
+        size_attr = f"sf_export_material_{texture_item.name}_size"
+        if hasattr(bpy.types.Scene, name_attr):
+            delattr(bpy.types.Scene, name_attr)
+        if hasattr(bpy.types.Scene, size_attr):
+            delattr(bpy.types.Scene, size_attr)
+    if hasattr(bpy.types.Scene, 'sf_export_material_normal_map_flip_y'):
+        delattr(bpy.types.Scene, 'sf_export_material_normal_map_flip_y')
+    if hasattr(bpy.types.Scene, 'sf_export_material_alpha_thresh'):
+        delattr(bpy.types.Scene, 'sf_export_material_alpha_thresh')
+    if hasattr(bpy.types.Scene, 'sf_export_material_alpha_blend_channel'):
+        delattr(bpy.types.Scene, 'sf_export_material_alpha_blend_channel')
+    if hasattr(bpy.types.Scene, 'sf_export_material_folder'):
+        delattr(bpy.types.Scene, 'sf_export_material_folder')

@@ -14,6 +14,15 @@ This is a single unified Blender addon for Starfield modding. **Do not create or
   - `ui/`: All UI panels, menus, and interface elements.
   - `operators/`: All operator classes for actions.
   - `types/`: Data type definitions and properties.
+## Project Overview
+This is a single unified Blender addon for Starfield modding. **Do not create or suggest separate extensions** - everything must be integrated into one addon through `scripts/starfield_blender_extension/`.
+
+## Code Structure and Organization
+- **Primary Addon Location**: All code belongs in `scripts/starfield_blender_extension/`.
+- **Subfolders**:
+  - `ui/`: All UI panels, menus, and interface elements.
+  - `operators/`: All operator classes for actions.
+  - `types/`: Data type definitions and properties.
   - `utils/`: Utility functions and helpers.
 - **Main Entry Point**: `__init__.py` registers all components.
 - **Avoid Duplication**: Do not create parallel structures like `Starfield_Blender_Extension/` or separate addons.
@@ -25,10 +34,12 @@ This is a single unified Blender addon for Starfield modding. **Do not create or
 
 ## UI Panel Management
 - All UI elements in `ui/` folder.
-- Panels must be properly categorized (e.g., `CATEGORY = "BGS Starfield"`).
+- Panels must be properly categorized (use `bl_category = "BGS Starfield"` for sidebar N-panels where applicable).
 - Use consistent naming: `ExportMaterialPanel`, `BoneRegionsPanel`.
 - Register/unregister in `__init__.py`.
-- Ensure panels show in correct areas (Properties window, not N-panel).
+- Ensure panels show in the correct areas:
+  - Panels targeting the Properties window: use `bl_space_type = 'PROPERTIES'` and `bl_region_type = 'WINDOW'`. Do NOT use `bl_category` for Properties panels.
+  - Panels targeting the N-panel (sidebar): use `bl_space_type = 'VIEW_3D'`, `bl_region_type = 'UI'`, and set `bl_category = "BGS Starfield"`.
 
 ## Operators and Types
 - Operators in `operators/` with clear names like `ExportMeshOperator`.
@@ -37,22 +48,20 @@ This is a single unified Blender addon for Starfield modding. **Do not create or
 
 ## Distribution and Packaging
 - Follow `SFGBDocs/ReleaseTemplate/` exactly for packaging.
-- Output to `release_packages/` or `release_packages_corrected/`.
-- Ensure single ZIP with all components.
+- Output to `release_packages/` or `release_packages_corrected/` as appropriate.
+- Ensure the distribution ZIP contains the single unified addon and required runtime files from the ReleaseTemplate.
+- When making changes to individual elements, compile the extension into `temp_check_dist/starfield_blender_extension` for testing.
+- Copy the reorganized addon from `scripts/starfield_blender_extension/` to `temp_check_dist/starfield_blender_extension/` when assembling test distributions.
+- Include necessary assets and DLLs from the ReleaseTemplate (`Assets/`, `3rdparty/`, `MeshConverter.dll`, etc.).
 
 ## Building and Testing
-- The extension is composed of scripts, profiler, include, src, plus relevant root files.
-- The `SFGBDocs/ReleaseTemplate/` represents the original compiled addon structure.
-- When making changes to individual elements, compile the extension into `temp_check_dist/starfield_blender_extension` for proper testing.
-- Copy the reorganized addon from `scripts/Starfield_Blender_Extension/` to `temp_check_dist/starfield_blender_extension/`.
-- Include necessary assets, DLLs, and folders from ReleaseTemplate (Assets/, 3rdparty/, MeshConverter.dll, etc.).
-- Update VS Code launch.json and tasks.json to point to `temp_check_dist/starfield_blender_extension` for debugging.
-- **DLL Compilation**: The MeshConverter.dll must be compiled from C++ source using Visual Studio. Dependencies (Eigen, DirectXMesh, nlohmann/json, miniball) need to be downloaded and paths configured in MeshConverter.vcxproj. OneDrive cloud files may cause copy issues - use local paths for dependencies.
+- The extension is composed of Python scripts plus native runtime artifacts and helper tools.
+- `build_tools/build_temp_distribution.py` builds `temp_check_dist/starfield_blender_extension` and validates runtime files.
+- The native `MeshConverter` C++ project must be compiled separately into `MeshConverter.dll` when a local build is required.
 
 ## Validation and Testing
 - After changes, run Blender to test addon loading and UI visibility.
-- Check console for import errors or registration issues.
-- Verify panels appear in correct locations.
+- Use `test_addon_load.py` or the `Build Temp Distribution` tasks to validate import and registration.
 
 ## Commit Rules
 - Only commit when explicitly instructed by the user.
@@ -65,7 +74,7 @@ This is a single unified Blender addon for Starfield modding. **Do not create or
 
 ## Examples
 
-### Adding a New UI Panel
+### Adding a New UI Panel (Properties window)
 ```python
 # In ui/new_panel.py
 import bpy
@@ -76,20 +85,27 @@ class NewPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
-    bl_category = "BGS Starfield"
 
     def draw(self, context):
         layout = self.layout
         layout.label(text="New Panel Content")
+```
 
-# In __init__.py
-from .ui.new_panel import NewPanel
+### Adding a New UI Panel (N-panel / Sidebar)
+```python
+# In ui/sidebar_panel.py
+import bpy
 
-def register():
-    bpy.utils.register_class(NewPanel)
+class SidebarPanel(bpy.types.Panel):
+    bl_label = "Sidebar Panel"
+    bl_idname = "BGS_PT_sidebar_panel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "BGS Starfield"
 
-def unregister():
-    bpy.utils.unregister_class(NewPanel)
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Sidebar Panel Content")
 ```
 
 ### Relative Import
@@ -97,5 +113,3 @@ def unregister():
 # In operators/export_ops.py
 from ..utils.blender_utils import get_preferences
 ```
-
-This ensures a clean, unified addon structure.

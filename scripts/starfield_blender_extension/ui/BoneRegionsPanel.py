@@ -472,7 +472,11 @@ def register():
 
 def unregister():
 	for c in __classes__:
-		bpy.utils.unregister_class(c)
-	
+		try:
+			bpy.utils.unregister_class(c)
+		except Exception:
+			pass
+
 	for attr in __scene_global_attrs__:
-		delattr(bpy.types.Scene, attr)
+		if hasattr(bpy.types.Scene, attr):
+			delattr(bpy.types.Scene, attr)
