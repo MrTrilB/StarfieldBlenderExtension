@@ -25,8 +25,19 @@ def bl_id_with_project_suffix(bl_id):
     return bl_id + "_starfield"
 
 
+# Bethesda never shipped a public Starfield BSFBX Blender addon. Collider /
+# rigidbody FBX for AssetWatcher comes from the Creation Kit / Skyrim Art Tools
+# exporter (`io_scene_bsfbx_skyrim` → `bpy.ops.export_scene.bsfbx_skyrim`).
+BSFBX_EXPORT_PLUGIN_NAME = "io_scene_bsfbx_skyrim"
+BSFBX_EXPORT_OPERATOR_ID = "bsfbx_skyrim"
+
+
 def get_export_plugin_name():
-    return bl_id_with_project_suffix("io_scene_bsfbx")
+    return BSFBX_EXPORT_PLUGIN_NAME
+
+
+def get_bsfbx_export_operator(module):
+    return getattr(module, BSFBX_EXPORT_OPERATOR_ID)
 
 
 def get_module_with_project_suffix(module, bl_id):

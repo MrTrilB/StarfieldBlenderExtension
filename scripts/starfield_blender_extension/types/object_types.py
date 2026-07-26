@@ -63,6 +63,28 @@ class BGS_STARFIELD_PG_node_properties(bpy.types.PropertyGroup):
         description="Specify a custom connection point name.",
         default=""
     )  # type: ignore
+    # Skyrim io_scene_bsfbx_skyrim reads these on Object.bgs_node. Starfield's PG
+    # originally omitted them, which raised AttributeError on Export BSFBX.
+    is_inventory_marker: bpy.props.BoolProperty(
+        name="Inventory Marker",
+        description="Mark this object as an inventory marker for BSFBX export.",
+        default=False
+    )  # type: ignore
+    has_behaviour_graph: bpy.props.BoolProperty(
+        name="Behaviour Graph",
+        description="Attach a behaviour graph path for BSFBX export.",
+        default=False
+    )  # type: ignore
+    behaviour_graph_path: bpy.props.StringProperty(
+        name="Behaviour Graph Path",
+        description="Path to the behaviour graph asset.",
+        default=""
+    )  # type: ignore
+    behaviour_graph_controls_base_skeleton: bpy.props.BoolProperty(
+        name="Behaviour Graph Controls Base Skeleton",
+        description="Whether the behaviour graph controls the base skeleton.",
+        default=False
+    )  # type: ignore
 
 
 partition_values = {

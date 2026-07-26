@@ -27,8 +27,23 @@ from ..utils.app_utils.app import AppUtils
 
 
 def do_bsfbx_export(context):
-    AppUtils.enable_addon(bs_plugin_data.get_export_plugin_name())
-    return bs_plugin_data.get_module_with_project_suffix(bpy.ops.export_scene, "bsfbx")(
+    plugin_name = bs_plugin_data.get_export_plugin_name()
+    _was, is_enabled = AppUtils.enable_addon(plugin_name)
+    if not is_enabled:
+        raise RuntimeError(
+            f"BSFBX exporter addon '{plugin_name}' is not installed. "
+            "Install the official Skyrim / Creation Kit BGS FBX exporter "
+            "(io_scene_bsfbx_skyrim), enable it in Preferences → Add-ons, "
+            "then retry Export BSFBX."
+        )
+    try:
+        export_op = bs_plugin_data.get_bsfbx_export_operator(bpy.ops.export_scene)
+    except AttributeError as exc:
+        raise RuntimeError(
+            f"Expected operator export_scene.{bs_plugin_data.BSFBX_EXPORT_OPERATOR_ID} "
+            f"from '{plugin_name}', but it was not registered."
+        ) from exc
+    return export_op(
         'INVOKE_DEFAULT',
         use_selection=bs_plugin_data.scene_get_bs_fbx_export_settings(
             context.scene).selected_only,
@@ -41,7 +56,7 @@ class BGS_STARFIELD_OT_verify_scene_data_and_do_export(bpy.types.Operator):
     bl_idname = bs_plugin_data.bl_id_with_project_suffix(
         "bgs_starfield.verify_scene_data_and_do_export")
     bl_label = "Export as BSFBX"
-    bl_description = "Verify data and export as FBX (bpy.ops.export_scene.bsfbx_starfield)"
+    bl_description = "Verify data and export as FBX (bpy.ops.export_scene.bsfbx_skyrim)"
 
     error_node_name: bpy.props.StringProperty()  # type: ignore
     error_message1: bpy.props.StringProperty()  # type: ignore
@@ -128,7 +143,11 @@ class BGS_STARFIELD_OT_verify_scene_data_and_do_export(bpy.types.Operator):
                 return context.window_manager.invoke_props_dialog(self)
 
         # calls async (current stack ends)
-        return do_bsfbx_export(context)
+        try:
+            return do_bsfbx_export(context)
+        except RuntimeError as exc:
+            self.report({'ERROR'}, str(exc))
+            return {'CANCELLED'}
 
     def draw(self, context):
         self.layout.label(text="Node:")
@@ -138,7 +157,11 @@ class BGS_STARFIELD_OT_verify_scene_data_and_do_export(bpy.types.Operator):
         self.layout.label(text=self.error_message2)
 
     def execute(self, context):
-        return do_bsfbx_export(context)
+        try:
+            return do_bsfbx_export(context)
+        except RuntimeError as exc:
+            self.report({'ERROR'}, str(exc))
+            return {'CANCELLED'}
 
 
 class BGS_STARFIELD_OT_set_recommended_unit_scale(bpy.types.Operator):
