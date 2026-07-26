@@ -46,6 +46,7 @@ https://www.youtube.com/watch?v=YuuFkJNWDCU
 
 - Blender **5.0+**
 - Access to Starfield loose asset files for full import/material path resolution
+- **Export BSFBX** (collider / rigidbody FBX for AssetWatcher): the official Skyrim / Creation Kit **BGS FBX Exporter** addon (`io_scene_bsfbx_skyrim`). Bethesda did not ship a public Starfield-named BSFBX Blender addon; this extension calls `bpy.ops.export_scene.bsfbx_skyrim`. Install and enable that addon, then use **Export BSFBX** as usual.
 
 ### Build/Developer Dependencies
 
