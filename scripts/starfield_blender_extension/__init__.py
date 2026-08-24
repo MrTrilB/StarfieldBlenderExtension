@@ -185,12 +185,20 @@ def register():
 
 def unregister():
 
+	# Some scene properties are declared both here and in the panel that uses
+	# them (br_driven_armature, for one), so the second delattr would raise and
+	# abort the loop, leaving later modules registered.
 	for attr in __scene_global_attrs__:
-		delattr(bpy.types.Scene, attr)
+		if hasattr(bpy.types.Scene, attr):
+			delattr(bpy.types.Scene, attr)
 
 	for module in __modules__:
 		if hasattr(module, 'unregister'):
-			module.unregister()
+			try:
+				module.unregister()
+			except Exception as exc:
+				# One failing module must not strand every module after it.
+				print(f"Starfield Blender Extension: {module.__name__} unregister failed: {exc}")
 	
 	# StarfieldArtTools preferences are unified in Preferences.SGBPreferences.
 

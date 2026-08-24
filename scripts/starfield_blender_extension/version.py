@@ -40,6 +40,10 @@ def make_version(version: str) -> Version:
     return v
 
 __extra_compatible_dict__ = {
+    # The physics editor is now versioned in lockstep with the main addon, so
+    # 1.6.0 pairs with 1.6.0. The older 0.17.0 stays listed because an existing
+    # install may still have it side by side.
+    (1, 6, 0): {'tool_physics_editor': [(1, 6, 0), (0, 17, 0)]},
     (1, 5, 0): {'tool_physics_editor': [(0, 17, 0)]},
     (1, 4, 0): {'tool_physics_editor': [(0, 17, 0)]},
     (1, 3, 0): {'tool_physics_editor': [(0, 17, 0)]},
@@ -57,51 +61,40 @@ def check_compatibility(submodule_name: str, raise_if_not_found: bool = False) -
             raise Exception(f"Main module '{main_name}' not enabled.")
         return False
 
-    # For bundled submodules (directories within the main addon), check if directory exists
-    bundled_submodules = ['tool_batch_process', 'tool_physics_editor']
-    if submodule_name in bundled_submodules:
-        # Get the main addon module to find its path
-        mods = addon_utils.modules()
-        main_mod = None
-        for mod in mods:
-            if mod.__name__ == main_name:
-                main_mod = mod
-                break
-        
-        if main_mod and hasattr(main_mod, '__file__'):
-            addon_dir = os.path.dirname(main_mod.__file__)
-            submodule_path = os.path.join(addon_dir, submodule_name)
-            if not os.path.exists(submodule_path):
-                if raise_if_not_found:
-                    raise Exception(f"Submodule directory '{submodule_name}' not found at {submodule_path}.")
-                return False
-        else:
-            if raise_if_not_found:
-                raise Exception(f"Could not determine main addon path for submodule check.")
-            return False
-    else:
-        # For external addons, check if they're enabled
-        _, enabled = addon_utils.check(submodule_name)
-        if not enabled:
-            if raise_if_not_found:
-                raise Exception(f"Submodule '{submodule_name}' not enabled.")
-            return False
-    
-    # Get version info
+    # A submodule can arrive either way, so try both rather than assuming one.
+    # build_temp_distribution copies tool_physics_editor *beside* the main addon,
+    # so treating it as bundled-only made this return False for a normal install
+    # and NifIO then dropped physics data with only a warning.
     mods = addon_utils.modules()
     main_plugin_version = None
     submodule_version = None
+    main_mod = None
     for mod in mods:
         if mod.__name__ == main_name:
+            main_mod = mod
             main_plugin_version = Version(mod.bl_info['version'])
-        elif mod.__name__ == submodule_name and submodule_name not in bundled_submodules:
+        elif mod.__name__ == submodule_name:
             submodule_version = Version(mod.bl_info['version'])
 
-    # For bundled submodules, we assume compatibility if the directory exists
-    if submodule_name in bundled_submodules:
-        return True
-    
-    return compare_versions(main_plugin_version.as_str(), submodule_version.as_str(), submodule_name)
+    # Installed as its own addon: compare versions.
+    _, submodule_enabled = addon_utils.check(submodule_name)
+    if submodule_enabled and submodule_version is not None and main_plugin_version is not None:
+        return compare_versions(
+            main_plugin_version.as_str(), submodule_version.as_str(), submodule_name
+        )
+
+    # Bundled inside the main addon: presence of the directory is enough, since
+    # it ships and versions with the addon.
+    if main_mod and getattr(main_mod, '__file__', None):
+        addon_dir = os.path.dirname(main_mod.__file__)
+        if os.path.exists(os.path.join(addon_dir, submodule_name)):
+            return True
+
+    if raise_if_not_found:
+        raise Exception(
+            f"Submodule '{submodule_name}' is neither enabled as an addon nor bundled in {main_name}."
+        )
+    return False
         
 import functools
 
@@ -113,8 +106,14 @@ def compare_versions(main_version_str: str, sub_module_version_str: str, sub_mod
     main_version = make_version(main_version_str).as_tuple()
     sub_module_version = make_version(sub_module_version_str).as_tuple()
 
-    #if sub_module_version == main_version:
-    #    return True
+    # Matching versions are compatible by definition. Without this the table has
+    # to gain an entry on every release, and a missed bump silently disables
+    # physics: build_temp_distribution installs tool_physics_editor beside the
+    # main addon rather than inside it, so the bundled short-circuit in
+    # check_compatibility does not apply and this comparison decides. NifIO then
+    # drops physics data with only a warning, which is easy to miss.
+    if sub_module_version == main_version:
+        return True
 
     if main_version in __extra_compatible_dict__:
         extra_compatible_versions = __extra_compatible_dict__[main_version]
